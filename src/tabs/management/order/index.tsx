@@ -1,31 +1,29 @@
-import { Col, Row, Space } from "antd";
+import { Space } from "antd";
+import { useState } from "react";
 import OrderListComponent from "./OrderListComponent";
-import OrderLineChartComponent from "./OrderLineChartComponent";
-import OrderPieChartComponent from "./OrderPieChartComponent";
 import { useInfoOrders } from "../../../hook/useInfoOrders";
 import { OrderInfo } from "../../../apis/orders.api";
-import { filterOrdersByKey, formatIdOrder } from "../../../utils";
-
-const keysFilter = ["completed", "cancelled", "pending", "partially_filled"];
+import { formatIdOrder } from "../../../utils";
 
 export const OrderManagement = () => {
-  const { data: orders, isLoading } = useInfoOrders();
+  const [page, setPage] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(10);
+  const [side, setSide] = useState<string>("All");
+  const [type, setType] = useState<string>("All");
+  const [status, setStatus] = useState<string>("All");
+  const [search, setSearch] = useState<string>("");
 
-  const dataOrderPieChart = keysFilter.map((key) => {
-    return {
-      name: key,
-      value: filterOrdersByKey(orders, "status", key).length,
-      color:
-        key === "completed"
-          ? "#4caf50"
-          : key === "cancelled"
-          ? "#f44336"
-          : key === "pending"
-          ? "#ff9800"
-          : "#2196f3",
-    };
+  const { data, isLoading, isFetching } = useInfoOrders({
+    limit,
+    page,
+    side: side === "All" ? undefined : (side as any),
+    type: type === "All" ? undefined : (type as any),
+    status: status === "All" ? undefined : (status as any),
+    search: search || undefined,
   });
-  const dataOrderList: OrderInfo[] = orders
+  const orders = data?.items;
+
+  const dataOrderList: OrderInfo[] = Array.isArray(orders)
     ? orders.filter(order => order !== null).map((order) => {
         return {
           ...order,
@@ -38,15 +36,23 @@ export const OrderManagement = () => {
   return (
     <Space direction="vertical" size="middle" style={{ display: "flex" }}>
       <h1 style={{ fontSize: 24, fontWeight: 600 }}>Order Management</h1>
-      <Row gutter={16}>
-        <Col span={8}>
-          <OrderPieChartComponent data={dataOrderPieChart} />
-        </Col>
-        <Col span={16}>
-          <OrderLineChartComponent data={orders} isLoading={isLoading} />
-        </Col>
-      </Row>
-      <OrderListComponent data={dataOrderList} loading={isLoading} />
+      <OrderListComponent 
+        data={dataOrderList}
+        loading={isLoading || isFetching}
+        total={data?.pagination?.total ?? 0}
+        page={page}
+        limit={limit}
+        onPageChange={(p) => setPage(p)}
+        onLimitChange={(ps) => { setPage(1); setLimit(ps); }}
+        selectedType={type}
+        selectedSide={side}
+        selectedStatus={status}
+        onTypeChange={(v) => { setPage(1); setType(v); }}
+        onSideChange={(v) => { setPage(1); setSide(v); }}
+        onStatusChange={(v) => { setPage(1); setStatus(v); }}
+        search={search}
+        onSearchChange={(v) => { setPage(1); setSearch(v); }}
+      />
     </Space>
   );
 };

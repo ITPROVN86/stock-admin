@@ -28,8 +28,9 @@ export const filterOrdersByKey = (
   value?: OrderInfo[keyof OrderInfo], 
   fuzzySearch?: boolean
 ): OrderInfo[] => {
+  if (!orders || !Array.isArray(orders)) return [];
 
-  return orders ? orders.filter(order => {
+  return orders.filter(order => {
     if (!order) return false;
 
     if (key === "id" && value) {
@@ -47,7 +48,7 @@ export const filterOrdersByKey = (
     } else {
       return orderValue === value;
     }
-  }) : [];
+  });
 };
 
 export const filterOrdersMatchByKey = (
@@ -56,8 +57,9 @@ export const filterOrdersMatchByKey = (
   value?: OrderMatch[keyof OrderMatch], 
   fuzzySearch?: boolean
 ): OrderMatch[] => {
+  if (!orders || !Array.isArray(orders)) return [];
 
-  return orders ? orders.filter(order => {
+  return orders.filter(order => {
     
     if (key === "id" && value) {
       const formattedId = formatIdOrder(order.id, "m");
@@ -74,7 +76,7 @@ export const filterOrdersMatchByKey = (
     } else {
       return orderValue === value;
     }
-  }) : [];
+  });
 };
 export const filterContestsByKey = (
   contests: Contest[], 

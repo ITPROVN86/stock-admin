@@ -1,11 +1,9 @@
 import { Button, Input, Select, Space, Table, Tag } from "antd";
 import { ColumnsType } from "antd/es/table";
 import { SearchProps } from "antd/es/input";
-import { filterType } from "./constants";
 import { OrderInfo } from "../../../apis/orders.api";
 import moment from "moment";
 import { useEffect, useState } from "react";
-import { filterOrdersByKey } from "../../../utils";
 import styled from 'styled-components';
 
  const StyledTableOrder = styled.div`
@@ -26,53 +24,41 @@ const { Option } = Select;
 type Props = {
   data: OrderInfo[];
   loading: boolean;
+  total?: number;
+  page?: number;
+  limit?: number;
+  onPageChange?: (page: number) => void;
+  onLimitChange?: (pageSize: number) => void;
+  selectedType?: string;
+  selectedSide?: string;
+  selectedStatus?: string;
+  onTypeChange?: (v: string) => void;
+  onSideChange?: (v: string) => void;
+  onStatusChange?: (v: string) => void;
+  search?: string;
+  onSearchChange?: (v: string) => void;
 };
 
 const ListComponent: React.FC<Props> = (props) => {
-  const { data, loading } = props;
+  const { data, loading, total, page = 1, limit = 10, onPageChange, onLimitChange, selectedType = "All", selectedSide = "All", selectedStatus = "All", onTypeChange, onSideChange, onStatusChange, search = "", onSearchChange } = props;
   const [filteredData, setFilteredData] = useState<OrderInfo[]>(data);
-  const [filterOption, setFilterOption] = useState<string>("All");
+
   useEffect(() => {
-    if(!loading) {
+    if (!loading) {
       setFilteredData(data);
     }
   }, [data, loading])
-  
-  const handleFilterChange = (value: string) => {
-    setFilterOption(value);
-    let filteredOrders: OrderInfo[] = [];
-
-    switch (value) {
-      case "Today":
-        filteredOrders = data?.filter(order =>
-          moment(order.createdAt).isSame(moment(), "day")
-        );
-        break;
-      case "This Week":
-        filteredOrders = data?.filter(order =>
-          moment(order.createdAt).isSame(moment(), "week")
-        );
-        break;
-      case "This Month":
-        filteredOrders = data?.filter(order =>
-          moment(order.createdAt).isSame(moment(), "month")
-        );
-        break;
-      case "All":
-        filteredOrders = data;
-        break;
-      default:
-        filteredOrders = data;
-    }
-    
-    setFilteredData(filteredOrders);
-  };
 
   const columns: ColumnsType<OrderInfo> = [
     {
       title: "Order ID",
       dataIndex: "id",
       key: "id",
+    },
+    {
+      title: "UID",
+      dataIndex: "uid",
+      key: "uid",
     },
     {
       title: "Email",
@@ -170,11 +156,6 @@ const ListComponent: React.FC<Props> = (props) => {
       key: "totalAmount",
     },
     {
-      title: "Filled Amount",
-      dataIndex: "filledAmount",
-      key: "filledAmount",
-    },
-    {
       title: "Created At",
       dataIndex: "createdAt",
       key: "createdAt",
@@ -195,7 +176,7 @@ const ListComponent: React.FC<Props> = (props) => {
   ];
 
   const onSearch: SearchProps["onSearch"] = (value: string) =>
-    setFilteredData(data ? filterOrdersByKey(data, "id", value, true) : []);
+    onSearchChange?.(value);
 
   return (
     <div
@@ -227,31 +208,68 @@ const ListComponent: React.FC<Props> = (props) => {
         }}
       >
         <Space>
-          <Select
-            value={filterOption}
-            onChange={handleFilterChange}
-            style={{ width: "10rem" }}
-          >
-            {filterType.map((type) => (
-              <Option key={type} value={type}>
-                {type}
-              </Option>
-            ))}
-          </Select>
+          <Space>
+            <span style={{ minWidth: 40 }}>Type</span>
+            <Select
+              value={selectedType}
+              onChange={onTypeChange}
+              style={{ width: "6rem" }}
+            >
+              {["All", "limit", "market"].map((type) => (
+                <Option key={type} value={type}>
+                  {type}
+                </Option>
+              ))}
+            </Select>
+          </Space>
+          <Space>
+            <span style={{ minWidth: 40 }}>Side</span>
+            <Select
+              value={selectedSide}
+              onChange={onSideChange}
+              style={{ width: "6rem" }}
+            >
+              {["All", "buy", "sell"].map((side) => (
+                <Option key={side} value={side}>
+                  {side}
+                </Option>
+              ))}
+            </Select>
+          </Space>
+          <Space>
+            <span style={{ minWidth: 52 }}>Status</span>
+            <Select
+              value={selectedStatus}
+              onChange={onStatusChange}
+              style={{ width: "8rem" }}
+            >
+              {["All", "pending", "partially_filled", "completed", "cancelled"].map((status) => (
+                <Option key={status} value={status}>
+                  {status}
+                </Option>
+              ))}
+            </Select>
+          </Space>
           <Input.Search
-            placeholder=" Search order"
-            style={{ width: 200 }}
+            placeholder=" Search by Order ID or UID"
+            style={{ width: 300 }}
+            value={search}
+            onChange={(e) => onSearchChange?.(e.target.value)}
             onSearch={onSearch}
           />
         </Space>
 
         <div>
-          <span>Total: {filteredData?.length.toLocaleString()} and showing </span>
+          <span>Total: {(total ?? filteredData?.length)?.toLocaleString()} and showing </span>
           <Input
-            style={{ width: 50, textAlign: "center", margin: "0 8px" }}
-            defaultValue={10}
+            style={{ width: 60, textAlign: "center", margin: "0 8px" }}
+            value={limit}
+            onChange={(e) => {
+              const v = parseInt(e.target.value || '0', 10);
+              if (!Number.isNaN(v) && v > 0) onLimitChange?.(v);
+            }}
           />
-          <span>page</span>
+          <span>per page</span>
         </div>
       </Space>
       <StyledTableOrder>
@@ -262,6 +280,17 @@ const ListComponent: React.FC<Props> = (props) => {
           bordered
           size="small"
           className="custom-table"
+          pagination={{
+            current: page,
+            pageSize: limit,
+            total: total ?? filteredData.length,
+            showSizeChanger: true,
+            pageSizeOptions: [10, 12, 20, 50, 100].map(String),
+            onChange: (p, ps) => {
+              onPageChange?.(p);
+              if (ps !== limit) onLimitChange?.(ps);
+            },
+          }}
         />
       </StyledTableOrder>
       

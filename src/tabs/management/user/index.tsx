@@ -81,6 +81,11 @@ export const UserManagement = () => {
       width: 20,
     },
     {
+      title: "UID",
+      dataIndex: "id",
+      key: "id",
+    },
+    {
       title: "Name",
       dataIndex: "fullName",
       key: "fullName",
