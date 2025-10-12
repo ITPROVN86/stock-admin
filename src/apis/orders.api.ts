@@ -28,6 +28,7 @@ export interface OrderInfo {
 
 export interface OrderMatch {
   id: string;
+  uid: string;
   orderBuyId: string;
   orderSellId: string;
   incomingOrderId: string;
@@ -35,6 +36,13 @@ export interface OrderMatch {
   price: number;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export type MatchDateRange = "day" | "week" | "month" | "year" | "all";
+
+export interface OrderMatchListResponse {
+  items: OrderMatch[];
+  pagination: Pagination;
 }
 
 export interface Pagination {
@@ -83,7 +91,28 @@ export const getAllInfoOrders = async (
   };
 };
 
-export const getAllInfoOrdersMatch = async (): Promise<OrderMatch[]> => {
-  const response = await api.get(`${appUrls.tradeURL}/admin/match-histories`);
-  return response.data.data;
+export const getAllInfoOrdersMatch = async (
+  params?: { page?: number; limit?: number; searchUid?: string; dateRange?: MatchDateRange }
+): Promise<OrderMatchListResponse> => {
+  const queryParams: Record<string, string | number> = {
+    page: params?.page ?? 1,
+    limit: params?.limit ?? 10,
+  };
+
+  if (params?.searchUid) queryParams.searchUid = params.searchUid;
+  if (params?.dateRange) queryParams.dateRange = params.dateRange;
+
+  const response = await api.get(`${appUrls.tradeURL}/admin/match-histories`, {
+    params: queryParams,
+  });
+
+  return {
+    items: response.data?.data?.items ?? [],
+    pagination: response.data?.data?.pagination ?? {
+      page: params?.page ?? 1,
+      limit: params?.limit ?? 10,
+      total: 0,
+      totalPages: 0,
+    },
+  };
 };

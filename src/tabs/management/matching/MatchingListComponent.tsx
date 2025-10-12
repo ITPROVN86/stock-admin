@@ -3,9 +3,9 @@ import { ColumnsType } from "antd/es/table";
 import { SearchProps } from "antd/es/input";
 import { useEffect, useState } from "react";
 import { filterType } from "./constants";
-import { OrderMatch } from "../../../apis/orders.api";
+import { MatchDateRange, OrderMatch } from "../../../apis/orders.api";
 import moment from "moment";
-import { filterOrdersMatchByKey, formatIdOrder } from "../../../utils";
+import { formatIdOrder } from "../../../utils";
 import { FilterType } from "./type";
 import styled from 'styled-components';
 
@@ -27,11 +27,19 @@ const { Option } = Select;
 interface ListMatchChartProps {
   data: OrderMatch[];
   loading: boolean;
+  page: number;
+  limit: number;
+  total: number;
+  onChangePage: (page: number, limit?: number) => void;
+  onSearchUid: (value: string) => void;
+  onChangeDateRange: (value: MatchDateRange) => void;
+  currentDateRange: MatchDateRange;
 }
 const MatchingListComponent: React.FC<ListMatchChartProps> = (props) => {
-  const { data, loading } = props;
+  const { data, loading, page, limit, total, onChangePage, onSearchUid, onChangeDateRange } = props;
   const [filteredData, setFilteredData] = useState<OrderMatch[]>(data);
   const [filterOption, setFilterOption] = useState<FilterType>("All");
+  const [searchValue, setSearchValue] = useState<string>("");
 
   useEffect(() => {
     if (!loading) {
@@ -40,43 +48,26 @@ const MatchingListComponent: React.FC<ListMatchChartProps> = (props) => {
   }, [data, loading]);
   const handleFilterChange = (value: FilterType) => {
     setFilterOption(value);
-    let filteredOrders: OrderMatch[] = [];
-
-    switch (value) {
-      case "Today":
-        filteredOrders = data.filter((order) =>
-          moment(order.createdAt).isSame(moment(), "day")
-        );
-        break;
-      case "This Week":
-        filteredOrders = data.filter((order) =>
-          moment(order.createdAt).isSame(moment(), "week")
-        );
-        break;
-      case "This Month":
-        filteredOrders = data.filter((order) =>
-          moment(order.createdAt).isSame(moment(), "month")
-        );
-        break;
-      case "This Year":
-        filteredOrders = data.filter((order) =>
-          moment(order.createdAt).isSame(moment(), "year")
-        );
-        break;
-      case "All":
-        filteredOrders = data;
-        break;
-      default:
-        filteredOrders = data;
-    }
-
-    setFilteredData(filteredOrders);
+    // Map old UI filter options to BE-supported dateRange
+    const map: Record<FilterType, MatchDateRange> = {
+      All: "all",
+      Today: "day",
+      "This Week": "week",
+      "This Month": "month",
+      "This Year": "year",
+    };
+    onChangeDateRange(map[value]);
   };
   const columns: ColumnsType<OrderMatch> = [
     {
       title: "Order ID",
       dataIndex: "id",
       key: "id",
+    },
+    {
+      title: "UID",
+      dataIndex: "uid",
+      key: "uid",
     },
     {
       title: "Order Buy ID",
@@ -163,10 +154,17 @@ const MatchingListComponent: React.FC<ListMatchChartProps> = (props) => {
     },
   ];
 
-  const onSearch: SearchProps["onSearch"] = (value: string) =>
-    setFilteredData(
-      data ? filterOrdersMatchByKey(data, "id", value, true) : []
-    );
+  const onSearch: SearchProps["onSearch"] = (value: string) => {
+    onSearchUid(value);
+  };
+
+  // Debounce search as user types
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      onSearchUid(searchValue.trim());
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [searchValue]);
 
   return (
     <div
@@ -211,21 +209,18 @@ const MatchingListComponent: React.FC<ListMatchChartProps> = (props) => {
             ))}
           </Select>
           <Input.Search
-            placeholder=" Search trade"
-            style={{ width: 200 }}
+            placeholder=" Search trade by UID"
+            style={{ width: 300 }}
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
             onSearch={onSearch}
           />
         </Space>
 
         <div>
           <span>
-            Total: {filteredData?.length.toLocaleString()} and showing{" "}
+            Total: {total.toLocaleString()} • Page {page} / {Math.max(1, Math.ceil(total / Math.max(1, limit)))}
           </span>
-          <Input
-            style={{ width: 50, textAlign: "center", margin: "0 8px" }}
-            defaultValue={10}
-          />
-          <span>page</span>
         </div>
       </Space>
       <StyledTableMatching>
@@ -236,6 +231,13 @@ const MatchingListComponent: React.FC<ListMatchChartProps> = (props) => {
           bordered
           size="middle"
           className="custom-table"
+          pagination={{
+            current: page,
+            pageSize: limit,
+            total: total,
+            showSizeChanger: true,
+            onChange: (p, pageSize) => onChangePage(p, pageSize),
+          }}
         />
       </StyledTableMatching>
      
