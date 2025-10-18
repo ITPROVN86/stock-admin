@@ -1,4 +1,5 @@
-import { Button, Input, Select, Space, Table, Tag } from "antd";
+import { Button, DatePicker, Input, Select, Space, Table, Tag } from "antd";
+import dayjs from "dayjs";
 import { ColumnsType } from "antd/es/table";
 import { SearchProps } from "antd/es/input";
 import { OrderInfo } from "../../../apis/orders.api";
@@ -37,10 +38,15 @@ type Props = {
   onStatusChange?: (v: string) => void;
   search?: string;
   onSearchChange?: (v: string) => void;
+  exportStartDate?: string;
+  exportEndDate?: string;
+  onDateRangeChange?: (startISO?: string, endISO?: string) => void;
+  onExport?: () => void;
+  exporting?: boolean;
 };
 
 const ListComponent: React.FC<Props> = (props) => {
-  const { data, loading, total, page = 1, limit = 10, onPageChange, onLimitChange, selectedType = "All", selectedSide = "All", selectedStatus = "All", onTypeChange, onSideChange, onStatusChange, search = "", onSearchChange } = props;
+  const { data, loading, total, page = 1, limit = 10, onPageChange, onLimitChange, selectedType = "All", selectedSide = "All", selectedStatus = "All", onTypeChange, onSideChange, onStatusChange, search = "", onSearchChange, onDateRangeChange, onExport, exporting } = props;
   const [filteredData, setFilteredData] = useState<OrderInfo[]>(data);
 
   useEffect(() => {
@@ -197,7 +203,17 @@ const ListComponent: React.FC<Props> = (props) => {
       >
         <h3 style={{ fontSize: 18, fontWeight: 600 }}> Order List</h3>
         <Space>
-          <Button type="default">Download report</Button>
+          <DatePicker.RangePicker
+            disabledDate={(current) => !!current && current > dayjs().endOf('day')}
+            onChange={(values) => {
+              const start = values?.[0] ? values[0].startOf('day').toDate() : undefined;
+              const end = values?.[1] ? values[1].endOf('day').toDate() : undefined;
+              onDateRangeChange?.(start ? start.toISOString() : undefined, end ? end.toISOString() : undefined);
+            }}
+          />
+          <Button type="default" onClick={onExport} loading={exporting} disabled={exporting}>
+            Export CSV
+          </Button>
         </Space>
       </Space>
       <Space

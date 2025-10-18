@@ -1,9 +1,9 @@
-import { Button, Input, Select, Space, Table, Tooltip } from "antd";
+import { Button, Input, Modal, Select, Space, Table, Tooltip, Tag } from "antd";
 import { ColumnsType } from "antd/es/table";
 import { SearchProps } from "antd/es/input";
 import { useEffect, useState } from "react";
 import { filterType } from "./constants";
-import { MatchDateRange, OrderMatch } from "../../../apis/orders.api";
+import { MatchDateRange, OrderMatch, getOrderById, OrderInfo } from "../../../apis/orders.api";
 import moment from "moment";
 import { formatIdOrder } from "../../../utils";
 import { FilterType } from "./type";
@@ -40,6 +40,23 @@ const MatchingListComponent: React.FC<ListMatchChartProps> = (props) => {
   const [filteredData, setFilteredData] = useState<OrderMatch[]>(data);
   const [filterOption, setFilterOption] = useState<FilterType>("All");
   const [searchValue, setSearchValue] = useState<string>("");
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [modalLoading, setModalLoading] = useState<boolean>(false);
+  const [selectedOrder, setSelectedOrder] = useState<OrderInfo | null>(null);
+
+  const openOrderDetail = async (orderId: string) => {
+    if (!orderId) return;
+    // Ensure we search with a zero-padded numeric id (e.g., 00284)
+    const normalizedId = orderId.toString().replace(/\D/g, "").padStart(5, "0");
+    setIsModalOpen(true);
+    setModalLoading(true);
+    try {
+      const detail = await getOrderById(normalizedId);
+      setSelectedOrder(detail);
+    } finally {
+      setModalLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!loading) {
@@ -65,6 +82,11 @@ const MatchingListComponent: React.FC<ListMatchChartProps> = (props) => {
       key: "id",
     },
     {
+      title: "Order Ticker",
+      dataIndex: "incomingOrderTicker",
+      key: "incomingOrderTicker",
+    },
+    {
       title: "UID",
       dataIndex: "uid",
       key: "uid",
@@ -74,7 +96,7 @@ const MatchingListComponent: React.FC<ListMatchChartProps> = (props) => {
       dataIndex: "orderBuyId",
       key: "orderBuyId",
       render: (id: string, record: OrderMatch) => {
-        return id === record.incomingOrderId ? (
+        const content = id === record.incomingOrderId ? (
           <Tooltip title="Match incoming">
             <span
               style={{
@@ -87,13 +109,18 @@ const MatchingListComponent: React.FC<ListMatchChartProps> = (props) => {
                 color: "black",
                 borderRadius: "1.2rem",
               }}
+              onClick={() => openOrderDetail(id)}
+              className="clickable-row"
             >
               {formatIdOrder(id, "o")}
             </span>
           </Tooltip>
         ) : (
-          formatIdOrder(id, "o")
+          <span onClick={() => openOrderDetail(id)} className="clickable-row">
+            {formatIdOrder(id, "o")}
+          </span>
         );
+        return content;
       },
     },
     {
@@ -101,7 +128,7 @@ const MatchingListComponent: React.FC<ListMatchChartProps> = (props) => {
       dataIndex: "orderSellId",
       key: "orderSellId",
       render: (id: string, record: OrderMatch) => {
-        return id === record.incomingOrderId ? (
+        const content = id === record.incomingOrderId ? (
           <Tooltip title="Match incoming">
             <span
               style={{
@@ -114,13 +141,18 @@ const MatchingListComponent: React.FC<ListMatchChartProps> = (props) => {
                 color: "white",
                 borderRadius: "1.2rem",
               }}
+              onClick={() => openOrderDetail(id)}
+              className="clickable-row"
             >
               {formatIdOrder(id, "o")}
             </span>
           </Tooltip>
         ) : (
-          formatIdOrder(id, "o")
+          <span onClick={() => openOrderDetail(id)} className="clickable-row">
+            {formatIdOrder(id, "o")}
+          </span>
         );
+        return content;
       },
     },
     {
@@ -133,6 +165,11 @@ const MatchingListComponent: React.FC<ListMatchChartProps> = (props) => {
       title: "Price",
       dataIndex: "price",
       key: "price",
+    },
+    {
+      title: "Order Price",
+      dataIndex: "incomingOrderPrice",
+      key: "incomingOrderPrice",
     },
     {
       title: "Created At",
@@ -240,6 +277,49 @@ const MatchingListComponent: React.FC<ListMatchChartProps> = (props) => {
           }}
         />
       </StyledTableMatching>
+      <Modal
+        open={isModalOpen}
+        title={selectedOrder ? `Order ${selectedOrder.id}` : "Order details"}
+        onCancel={() => {
+          setIsModalOpen(false);
+          setSelectedOrder(null);
+        }}
+        footer={null}
+        confirmLoading={modalLoading}
+        centered
+      >
+        {modalLoading && <div>Loading...</div>}
+        {!modalLoading && selectedOrder && (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            <div><strong>UID:</strong> {selectedOrder.uid}</div>
+            <div><strong>Email:</strong> {selectedOrder.email}</div>
+            <div><strong>Ticker:</strong> {selectedOrder.ticker}</div>
+            <div>
+              <strong>Type:</strong>{" "}
+              <Tag color={selectedOrder.type === "limit" ? "red" : "green"}>{selectedOrder.type}</Tag>
+            </div>
+            <div>
+              <strong>Side:</strong>{" "}
+              <Tag color={selectedOrder.side === "buy" ? "red" : "green"}>{selectedOrder.side}</Tag>
+            </div>
+            <div><strong>Price:</strong> {selectedOrder.price}</div>
+            <div>
+              <strong>Status:</strong>{" "}
+              <Tag color={
+                selectedOrder.status === "pending" ? "blue" :
+                selectedOrder.status === "partially_filled" ? "red" :
+                selectedOrder.status === "completed" ? "green" :
+                selectedOrder.status === "cancelled" ? "gold" : "default"
+              }>
+                {selectedOrder.status}
+              </Tag>
+            </div>
+            <div><strong>Total amount:</strong> {selectedOrder.totalAmount}</div>
+            <div><strong>Created at:</strong> {moment(selectedOrder.createdAt).format("YYYY-MM-DD HH:mm:ss")}</div>
+            <div><strong>Updated at:</strong> {moment(selectedOrder.updatedAt).format("YYYY-MM-DD HH:mm:ss")}</div>
+          </div>
+        )}
+      </Modal>
      
     </div>
   );

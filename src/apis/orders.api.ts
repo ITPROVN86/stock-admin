@@ -32,6 +32,8 @@ export interface OrderMatch {
   orderBuyId: string;
   orderSellId: string;
   incomingOrderId: string;
+  incomingOrderPrice?: number;
+  incomingOrderTicker?: string;
   amount: number;
   price: number;
   createdAt: Date;
@@ -55,6 +57,15 @@ export interface Pagination {
 export interface OrderListResponse {
   items: OrderInfo[];
   pagination: Pagination;
+}
+
+export interface OrderDetailResponse {
+  data: OrderInfo | null;
+}
+
+export interface ExportOrdersParams {
+  startDate: string; // ISO string
+  endDate: string;   // ISO string
 }
 
 export const getAllInfoOrders = async (
@@ -115,4 +126,30 @@ export const getAllInfoOrdersMatch = async (
       totalPages: 0,
     },
   };
+};
+
+export const getOrderById = async (orderId: string): Promise<OrderInfo | null> => {
+  if (!orderId) return null;
+  // BE supports searching via all-order with `search` (can be Order ID or UID)
+  const response = await api.get(`${appUrls.tradeURL}/admin/all-order`, {
+    params: { page: 1, limit: 1, search: orderId },
+  });
+  const items: OrderInfo[] = response?.data?.data?.items ?? [];
+  return items.length > 0 ? items[0] : null;
+};
+
+export const exportAllOrdersCSV = async (
+  params: ExportOrdersParams
+): Promise<Blob> => {
+  const response = await api.get(
+    `${appUrls.tradeURL}/admin/all-order/export`,
+    {
+      params: {
+        startDate: params.startDate,
+        endDate: params.endDate,
+      },
+      responseType: 'blob',
+    }
+  );
+  return response.data as Blob;
 };

@@ -1,9 +1,11 @@
-import { Space } from "antd";
+import { Space, message } from "antd";
 import { useState } from "react";
 import OrderListComponent from "./OrderListComponent";
 import { useInfoOrders } from "../../../hook/useInfoOrders";
 import { OrderInfo } from "../../../apis/orders.api";
 import { formatIdOrder } from "../../../utils";
+import { exportAllOrdersCSV } from "../../../apis/orders.api";
+import dayjs from "dayjs";
 
 export const OrderManagement = () => {
   const [page, setPage] = useState<number>(1);
@@ -12,6 +14,9 @@ export const OrderManagement = () => {
   const [type, setType] = useState<string>("All");
   const [status, setStatus] = useState<string>("All");
   const [search, setSearch] = useState<string>("");
+  const [exportStartDate, setExportStartDate] = useState<string | undefined>(undefined);
+  const [exportEndDate, setExportEndDate] = useState<string | undefined>(undefined);
+  const [exporting, setExporting] = useState<boolean>(false);
 
   const { data, isLoading, isFetching } = useInfoOrders({
     limit,
@@ -52,6 +57,37 @@ export const OrderManagement = () => {
         onStatusChange={(v) => { setPage(1); setStatus(v); }}
         search={search}
         onSearchChange={(v) => { setPage(1); setSearch(v); }}
+        exportStartDate={exportStartDate}
+        exportEndDate={exportEndDate}
+        onDateRangeChange={(start, end) => {
+          setExportStartDate(start);
+          setExportEndDate(end);
+        }}
+        onExport={async () => {
+          if (!exportStartDate || !exportEndDate) {
+            message.warning("Please select a date range first");
+            return;
+          }
+          try {
+            setExporting(true);
+            const startDateStr = dayjs(exportStartDate).format('YYYY-MM-DD');
+            const endDateStr = dayjs(exportEndDate).format('YYYY-MM-DD');
+            const blob = await exportAllOrdersCSV({ startDate: startDateStr, endDate: endDateStr });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `orders_${startDateStr}_to_${endDateStr}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+          } catch (err) {
+            message.error("Failed to export CSV");
+          } finally {
+            setExporting(false);
+          }
+        }}
+        exporting={exporting}
       />
     </Space>
   );
