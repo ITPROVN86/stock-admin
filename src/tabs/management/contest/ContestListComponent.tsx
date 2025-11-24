@@ -341,9 +341,6 @@ const ListComponent: React.FC<ContestDetailProps> = (props) => {
         <div style={{ marginTop: '0.55rem', padding: 24, backgroundColor: 'white', borderRadius: 10, boxShadow: '0 0 10px rgba(0,0,0,0.1)' }}>
             <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
                 <h3 style={{ fontSize: 18, fontWeight: 600 }}> Contest List</h3>
-                <Space>
-                    <Button type="default">Download report</Button>
-                </Space>
             </Space>
 
             <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>

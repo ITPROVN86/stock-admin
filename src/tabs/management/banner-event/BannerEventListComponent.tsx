@@ -245,9 +245,7 @@ const ListComponent = () => {
                 }}
             >
                 <h3 style={{ fontSize: 18, fontWeight: 600 }}> Banner Events</h3>
-                <Space>
-                    <Button type="default">Download report</Button>
-                </Space>
+   
             </Space>
 
             <Space

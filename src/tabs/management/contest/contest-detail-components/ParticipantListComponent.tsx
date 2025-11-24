@@ -1,4 +1,4 @@
-import { Avatar, Button, Space, Table, Empty, Skeleton } from "antd";
+import { Avatar, Space, Table, Empty, Skeleton } from "antd";
 import { ParticipantListComponentProps } from "../type";
 import { ColumnsType } from "antd/es/table";
 import { ContestParticipant } from "../../../../apis/contests.api";
@@ -58,7 +58,7 @@ const ParticipantListComponent = ({ participants, loading }: ParticipantListComp
     >
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
         <h3 style={{ fontSize: 18, fontWeight: 600 }}>Participants List</h3>
-        <Button type="default">Download report</Button>
+      
       </Space>
 
       {loading ? (

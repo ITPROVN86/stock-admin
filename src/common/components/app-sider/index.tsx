@@ -5,6 +5,7 @@ import {
   SyncOutlined,
   TrophyOutlined,
   UserOutlined,
+  BarChartOutlined,
 } from "@ant-design/icons";
 import { StyledSider } from "./style";
 import { Link, useLocation } from "react-router-dom";
@@ -60,6 +61,16 @@ const menuItems = [
     ),
     path: "/banner-event",
     icon: <SoundOutlined />,
+  },
+  {
+    key: "6",
+    label: (
+      <Link onClick={() => onScrollToTop()} to="https://cloud.umami.is/analytics/us/websites/9d154b8a-b69a-4912-a2a0-4f6d8af76660" target="_blank">
+        Analytics
+      </Link>
+    ),
+    path: "/analytics",
+    icon: <BarChartOutlined  />,
   },
 ];
 

@@ -165,20 +165,9 @@ const ListComponent: React.FC<Props> = (props) => {
       title: "Created At",
       dataIndex: "createdAt",
       key: "createdAt",
-      sorter: (a, b) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       render: (createAt: Date) =>
         moment(createAt).format("YYYY-MM-DD HH:mm:ss"),
-    },
-    {
-      title: "Updated At",
-      dataIndex: "updatedAt",
-      key: "updatedAt",
-      sorter: (a, b) =>
-        new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(),
-      render: (updatedAt: Date) =>
-        moment(updatedAt).format("YYYY-MM-DD HH:mm:ss"),
-    },
+    }
   ];
 
   const onSearch: SearchProps["onSearch"] = (value: string) =>

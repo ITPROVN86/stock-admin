@@ -12,7 +12,6 @@ import {
   message,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import type { SearchProps } from "./type";
 import { UserDetailContent, UserStatisticComponent } from "./components";
 import { UserOutlined } from "@ant-design/icons";
 import Search from "antd/es/input/Search";
@@ -23,7 +22,7 @@ import moment from "moment";
 import { useInfoAssetsUser, useInfoUsers } from "../../../hook/useInfoUsers";
 import { blockUsers, unblockUsers } from "../../../apis/auth.api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { filterUsersByKey } from "../../../utils";
+import { filterUsersByKey, filterUsersByMultipleFields } from "../../../utils";
 import { StyledTable } from "./style";
 
 const { Option } = Select;
@@ -45,7 +44,7 @@ export const UserManagement = () => {
 
   const [dataSearch, setDataSearch] = useState<UserInfo[] | undefined>();
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(5);
+  const [pageSize, setPageSize] = useState<number>(20);
 
   const showModal = (record: UserInfo) => {
     setSelectedUser(record);
@@ -115,11 +114,6 @@ export const UserManagement = () => {
       ),
     },
     {
-      title: "CIC",
-      dataIndex: "cic",
-      key: "cic",
-    },
-    {
       title: "Gender",
       dataIndex: "gender",
       key: "gender",
@@ -162,20 +156,18 @@ export const UserManagement = () => {
       title: "Created At",
       dataIndex: "createdAt",
       key: "createdAt",
-      sorter: (a, b) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       render: (createdAt: Date) =>
         moment(createdAt).format("YYYY-MM-DD HH:mm:ss"),
     },
-    {
-      title: "Updated At",
-      dataIndex: "updatedAt",
-      key: "updatedAt",
-      sorter: (a, b) =>
-        new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(),
-      render: (updatedAt: Date) =>
-        moment(updatedAt).format("YYYY-MM-DD HH:mm:ss"),
-    },
+    // {
+    //   title: "Updated At",
+    //   dataIndex: "updatedAt",
+    //   key: "updatedAt",
+    //   sorter: (a, b) =>
+    //     new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(),
+    //   render: (updatedAt: Date) =>
+    //     moment(updatedAt).format("YYYY-MM-DD HH:mm:ss"),
+    // },
     // {
     //     title: 'Balance',
     //     dataIndex: 'balance',
@@ -190,8 +182,9 @@ export const UserManagement = () => {
     setPageSize(pagination.pageSize);
   };
 
-  const onSearch: SearchProps["onSearch"] = (value) => {
-    setDataSearch(users ? filterUsersByKey(users, "email", value, true) : []);
+  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setDataSearch(users ? filterUsersByMultipleFields(users, value) : []);
   };
 
   const handleFilterUser = (value: OptionType) => {
@@ -249,9 +242,7 @@ export const UserManagement = () => {
       <Flex vertical gap={20}>
         <Space style={{ width: "100%", justifyContent: "space-between" }}>
           <h1 style={{ fontSize: 24, fontWeight: 600 }}>User Management</h1>
-          <Space>
-            <Button type="default">Download report</Button>
-          </Space>
+          
         </Space>
         <UserStatisticComponent />
         <Space style={{ width: "100%", justifyContent: "space-between" }}>
@@ -268,10 +259,10 @@ export const UserManagement = () => {
               ))}
             </Select>
             <Search
-              placeholder=" Search email"
+              placeholder="Email or UID"
               prefix={<UserOutlined style={{ color: "rgba(0,0,0,.25)" }} />}
               style={{ width: 200 }}
-              onSearch={onSearch}
+              onChange={onChange}
             />
             {selectedUserIds.length > 0 && (
               <Space>
@@ -305,7 +296,7 @@ export const UserManagement = () => {
           <Table
             rowKey={(record) => record.id}
             columns={columns}
-            dataSource={dataSearch ? dataSearch : users}
+            dataSource={dataSearch ? dataSearch.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : users?.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())}
             bordered
             size="small"
             className="custom-table"

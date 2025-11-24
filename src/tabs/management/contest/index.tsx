@@ -1,6 +1,5 @@
 import { Space } from "antd";
 import ContestListComponent from "./ContestListComponent";
-import ContestLineChartComponent from "./ContestLineChartComponent";
 import { useInfoContests } from "../../../hook/useInfoContest";
 
 export const ContestManagement = () => {
@@ -9,7 +8,7 @@ export const ContestManagement = () => {
     return (
         <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
             <h1 style={{ fontSize: 24, fontWeight: 600 }}>Contest Management</h1>
-            <ContestLineChartComponent contests={contests || []} loading={loading}/>
+            {/* <ContestLineChartComponent contests={contests || []} loading={loading}/> */}
             <ContestListComponent contests={contests || []} loading={loading}/>
         </Space>
     );

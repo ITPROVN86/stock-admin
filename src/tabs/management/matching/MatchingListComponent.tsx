@@ -1,4 +1,4 @@
-import { Button, Input, Modal, Select, Space, Table, Tooltip, Tag } from "antd";
+import { Input, Modal, Select, Space, Table, Tooltip, Tag } from "antd";
 import { ColumnsType } from "antd/es/table";
 import { SearchProps } from "antd/es/input";
 import { useEffect, useState } from "react";
@@ -175,20 +175,10 @@ const MatchingListComponent: React.FC<ListMatchChartProps> = (props) => {
       title: "Created At",
       dataIndex: "createdAt",
       key: "createdAt",
-      sorter: (a, b) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       render: (createAt: Date) =>
         moment(createAt).format("YYYY-MM-DD HH:mm:ss"),
     },
-    {
-      title: "Updated At",
-      dataIndex: "updatedAt",
-      key: "updatedAt",
-      sorter: (a, b) =>
-        new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(),
-      render: (updatedAt: Date) =>
-        moment(updatedAt).format("YYYY-MM-DD HH:mm:ss"),
-    },
+
   ];
 
   const onSearch: SearchProps["onSearch"] = (value: string) => {
@@ -221,9 +211,7 @@ const MatchingListComponent: React.FC<ListMatchChartProps> = (props) => {
         }}
       >
         <h3 style={{ fontSize: 18, fontWeight: 600 }}> Matching List</h3>
-        <Space>
-          <Button type="default">Download report</Button>
-        </Space>
+       
       </Space>
 
       <Space

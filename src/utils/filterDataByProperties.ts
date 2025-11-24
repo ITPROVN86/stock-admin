@@ -22,6 +22,26 @@ export const filterUsersByKey = (
   });
 };
 
+export const filterUsersByMultipleFields = (
+  users: UserInfo[], 
+  searchValue: string, 
+  fields: (keyof UserInfo)[] = ['email', 'id']
+): UserInfo[] => {
+  if (!searchValue.trim()) return users;
+
+  const searchTerm = searchValue.toLowerCase().trim();
+
+  return users.filter(user => {
+    return fields.some(field => {
+      const userValue = user[field];
+      if (typeof userValue === 'string') {
+        return userValue.toLowerCase().includes(searchTerm);
+      }
+      return false;
+    });
+  });
+};
+
 export const filterOrdersByKey = (
   orders: OrderInfo[] | undefined, 
   key: keyof OrderInfo, 

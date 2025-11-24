@@ -1,4 +1,4 @@
-import { Avatar, Button, Space, Table, Empty, Skeleton, Tooltip } from "antd";
+import { Avatar, Space, Table, Empty, Skeleton, Tooltip } from "antd";
 import {  RankListComponentProps } from "../type";
 import { ColumnsType } from "antd/es/table";
 import {  TopUser } from "../../../../apis/contests.api";
@@ -99,7 +99,7 @@ const RankListComponent = ({ topUsers, loading }: RankListComponentProps) => {
     >
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
         <h3 style={{ fontSize: 18, fontWeight: 600 }}>Top Users</h3>
-        <Button type="default">Download report</Button>
+      
       </Space>
 
       {loading ? (
